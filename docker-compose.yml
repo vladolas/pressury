@@ -1,0 +1,30 @@
+services:
+  postgres:
+    image: postgres:13
+    environment:
+      POSTGRES_DB: pressure_bot
+      POSTGRES_USER: bot_user
+      POSTGRES_PASSWORD: my_strong_password_123
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+
+  bot:
+    image: python:3.14-rc-slim
+    working_dir: /app
+    command: >
+      bash -c "
+        pip install --no-cache-dir -r requirements.txt &&
+        python main.py
+      "
+    volumes:
+      - ./bot:/app
+    environment:
+      - DATABASE_URL=postgresql://bot_user:my_strong_password_123@postgres:5432/pressure_bot
+      - BOT_TOKEN=${BOT_TOKEN}
+    env_file:
+      - .env
+    depends_on:
+      - postgres
+    restart: unless-stopped
